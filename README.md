@@ -2,6 +2,7 @@
 
 **Reproducible feature-space analysis for molecular-dynamics trajectories: periodic-feature handling, clustering, PCA, tICA, basic state-transition diagnostics, and optional autoencoders.**
 
+> Development status: **alpha (`0.1.0a2`)**. The package provides reusable analysis primitives; it does not certify a selected feature set, cluster count, tICA lag, or MSM as scientifically valid. Production analyses require trajectory-level validation and explicit physical-unit metadata.
 
 ## Why this package exists
 
@@ -195,3 +196,22 @@ This package does not read raw MD trajectories to calculate all protein features
 ## License and citation
 
 License selection and authorship details are intentionally unresolved. See [`LICENSE-STATUS.md`](LICENSE-STATUS.md). Replace the placeholder author/contact in `pyproject.toml` and `CITATION.cff` before publication.
+
+## Associate clusters with mechanistic outcomes
+
+Join cluster assignments to an independent, per-frame mechanism table by explicit identity columns. Never join by row order. For the existing research-style cluster-label table, while joining the standardized identity fields produced by the copper analysis toolkit:
+
+```bash
+mdstate associate results/clustered_features.tsv mechanism_features.tsv \
+  --label-keys Trajectory,Segment,Frame \
+  --mechanism-keys trajectory_id,segment_id,local_frame \
+  --trajectory-column Trajectory \
+  --cluster-column cluster_label \
+  --threshold 'CuS_distance_A<=3.5' \
+  --threshold 'salt_bridge_count>=1' \
+  --outdir results/cluster_mechanism
+```
+
+If both input tables use identical key names, use `--join-keys KEY1,KEY2,KEY3` instead.
+
+Both files must have exactly one row per identity key and exactly the same frame-key set. If a mechanism file contains long-form rows (for example, one row per salt bridge per frame), aggregate it to one row per frame before joining. Outputs include a joined frame table, cluster-level descriptive summaries, and per-trajectory/per-cluster summaries. Use the per-trajectory table for replicate-aware comparisons; frames are temporally correlated and must not be treated as independent replicates. A distance threshold such as 3.5 Å is a user-defined close-contact event, not a proof of bond formation or reactivity.

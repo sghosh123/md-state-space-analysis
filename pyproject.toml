@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "md-state-space-analysis"
-version = "0.1.0a1"
+version = "0.1.0a2"
 description = "Reproducible feature-space analysis, clustering, PCA, tICA, and latent-state tools for molecular-dynamics trajectories"
 readme = "README.md"
 requires-python = ">=3.10"

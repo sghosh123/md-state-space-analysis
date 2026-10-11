@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from .clustering import cluster_summary, fit_dbscan, fit_hdbscan, fit_kmeans, score_clustering, kmeans_parameter_sweep, dbscan_parameter_sweep
+from .association import associate_clusters_with_mechanism
 from .diagnostics import evaluate_tica_lags
 from .dimensionality import fit_pca, fit_tica
 from .fes import estimate_fes, plot_fes_2d, write_fes_table
@@ -222,6 +223,35 @@ def command_fes(args) -> int:
     return 0
 
 
+
+def command_associate(args) -> int:
+    """Join cluster labels to mechanistic features using exact frame identities."""
+    labels = read_feature_table(args.labels, sep=args.sep)
+    mechanism = read_feature_table(args.mechanism, sep=args.sep)
+    keys = [x.strip() for x in args.join_keys.split(",") if x.strip()] if args.join_keys else None
+    label_keys = [x.strip() for x in args.label_keys.split(",") if x.strip()] if args.label_keys else None
+    mechanism_keys = [x.strip() for x in args.mechanism_keys.split(",") if x.strip()] if args.mechanism_keys else None
+    thresholds = args.threshold or []
+    joined, cluster_summary, per_trajectory = associate_clusters_with_mechanism(
+        labels, mechanism, join_keys=keys, label_keys=label_keys, mechanism_keys=mechanism_keys,
+        cluster_column=args.cluster_column, trajectory_column=args.trajectory_column, thresholds=thresholds,
+    )
+    outdir = Path(args.outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+    save_table(joined, outdir / "cluster_mechanism_frames.tsv")
+    save_table(cluster_summary, outdir / "cluster_mechanism_summary.tsv")
+    save_table(per_trajectory, outdir / "cluster_mechanism_by_trajectory.tsv")
+    summary = {
+        "n_joined_frames": int(len(joined)), "join_keys": keys,
+        "label_keys": label_keys, "mechanism_keys": mechanism_keys,
+        "cluster_column": args.cluster_column, "trajectory_column": args.trajectory_column,
+        "thresholds": thresholds,
+        "note": "Frame fractions are descriptive. Use trajectory-level summaries—not frame counts as independent replicates—for uncertainty and inferential statistics.",
+    }
+    (outdir / "association_metadata.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    print(f"Joined {len(joined)} frame records; outputs written to {outdir.resolve()}")
+    return 0
+
 def command_demo(args) -> int:
     outdir = Path(args.outdir); outdir.mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(args.seed)
@@ -285,6 +315,19 @@ def build_parser() -> argparse.ArgumentParser:
     cs.add_argument("--mode", choices=["kmeans", "dbscan"], default="kmeans"); cs.add_argument("--k-values", default="2,3,4,5,6,7,8"); cs.add_argument("--seeds", default="42,43,44")
     cs.add_argument("--eps-values", default="0.2,0.3,0.4,0.5,0.7,1.0"); cs.add_argument("--min-samples-values", default="5,10,20")
     cs.set_defaults(func=command_cluster_sweep)
+    assoc = sub.add_parser("associate", help="Join cluster labels to per-frame mechanistic observables by explicit keys")
+    assoc.add_argument("labels", help="Table containing frame identity and cluster labels, e.g. clustered_features.tsv")
+    assoc.add_argument("mechanism", help="One-row-per-frame table with Cu-S distances, contact counts, RMSD, etc.")
+    assoc.add_argument("--join-keys", default=None, help="Comma-separated identity columns with the same names in both files")
+    assoc.add_argument("--label-keys", default=None, help="Optional label-table key columns, in order (use with --mechanism-keys)")
+    assoc.add_argument("--mechanism-keys", default=None, help="Optional mechanism-table key columns matching --label-keys by position")
+    assoc.add_argument("--cluster-column", default="cluster_label")
+    assoc.add_argument("--trajectory-column", default="trajectory_id", help="Independent trajectory/replicate ID; must be included in --join-keys")
+    assoc.add_argument("--threshold", action="append", default=[], help="Event threshold such as CuS_distance_A<=3.5; repeat for additional events")
+    assoc.add_argument("--outdir", default="cluster_mechanism")
+    assoc.add_argument("--sep", default=None, help="Optional explicit delimiter shared by both tables")
+    assoc.set_defaults(func=command_associate)
+
     f = sub.add_parser("fes", help="Estimate a 1D/2D/3D histogram free-energy surface from projected coordinates")
     f.add_argument("input"); f.add_argument("--coordinates", required=True, help="One to three coordinate columns, e.g. TIC1,TIC2")
     f.add_argument("--outdir", default="fes_results"); f.add_argument("--sep", default=None); f.add_argument("--bins", type=int, default=50)
