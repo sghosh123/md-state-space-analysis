@@ -2,7 +2,6 @@
 
 **Reproducible feature-space analysis for molecular-dynamics trajectories: periodic-feature handling, clustering, PCA, tICA, basic state-transition diagnostics, and optional autoencoders.**
 
-> Development status: **alpha (`0.1.0a2`)**. The package provides reusable analysis primitives; it does not certify a selected feature set, cluster count, tICA lag, or MSM as scientifically valid. Production analyses require trajectory-level validation and explicit physical-unit metadata.
 
 ## Why this package exists
 
