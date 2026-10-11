@@ -1,0 +1,20 @@
+{
+  "description": "Feature specification for the archived vector_distance-angles_output.tsv-style table. Confirm headers and unit conventions against the actual table before use.",
+  "trajectory_column": "Trajectory",
+  "segment_column": "DCD Segment",
+  "frame_column": "Frame",
+  "feature_columns": [
+    "A–X", "B–X", "A–Y", "B–Y",
+    "d_A1X1", "d_A1Y1", "d_B1X1", "d_B1Y1",
+    "d_A2X2", "d_A2Y2", "d_B2X2", "d_B2Y2"
+  ],
+  "angle_degrees": ["A–X", "B–X", "A–Y", "B–Y"],
+  "angle_radians": [],
+  "distance_columns": [
+    "d_A1X1", "d_A1Y1", "d_B1X1", "d_B1Y1",
+    "d_A2X2", "d_A2Y2", "d_B2X2", "d_B2Y2"
+  ],
+  "distance_unit_in_archived_generator": "angstrom",
+  "angle_unit_in_archived_generator": "degree",
+  "warning": "The archived distance generator uses MDAnalysis distance_array, which reports coordinates/distances in angstrom. Do not label these distances nm unless converted by an explicit factor of 0.1. Frame lag is in saved frames, not physical time."
+}

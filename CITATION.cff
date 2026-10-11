@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "Please replace placeholder author metadata and license before release."
+title: "MD State-Space Analysis"
+version: 0.1.0a1
+authors:
+  - family-names: "ReplaceBeforeRelease"
+    given-names: "Research Software Author"
+    email: "replace-before-release@example.org"
+license: "NOASSERTION"
